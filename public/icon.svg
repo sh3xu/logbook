@@ -1,0 +1,29 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="180" height="180" rx="40" fill="#FAFAF0" />
+  
+  <!-- Neobrutalist Shadow for Book -->
+  <rect x="50" y="80" width="100" height="70" rx="8" fill="#000000" />
+  
+  <!-- The Book -->
+  <rect x="40" y="70" width="100" height="70" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="8" />
+  
+  <!-- Page Lines -->
+  <rect x="60" y="95" width="60" height="6" rx="3" fill="#000000" opacity="0.8" />
+  <rect x="60" y="115" width="40" height="6" rx="3" fill="#121212" opacity="0.6" />
+  
+  <!-- The Floating Key -->
+  <g transform="translate(110, 50) rotate(15)">
+    <!-- Key Head (Pink for that cyber pop) -->
+    <circle cx="0" cy="0" r="18" fill="#FF2E63" stroke="#000000" stroke-width="8" />
+    <circle cx="0" cy="0" r="6" fill="#000000" />
+    
+    <!-- Key Stem -->
+    <path d="M0 18V48" stroke="#000000" stroke-width="8" stroke-linecap="round" />
+    <path d="M0 32H12" stroke="#000000" stroke-width="8" stroke-linecap="round" />
+    <path d="M0 42H12" stroke="#000000" stroke-width="8" stroke-linecap="round" />
+  </g>
+  
+  <!-- Decorative Accent -->
+  <circle cx="140" cy="40" r="6" fill="#FF2E63" />
+</svg>
