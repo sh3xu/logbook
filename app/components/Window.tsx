@@ -154,8 +154,8 @@ export default function DesktopWindow({
           typeof window !== "undefined" && window.innerWidth < 768
             ? 35
             : zIndex,
-        height: "70vh",
-        maxHeight: "70vh",
+        height: "80vh",
+        maxHeight: "80vh",
       }}
       // We will conditionally apply the transform via ref in the useEffect or just override it in CSS.
       // Let's modify the useEffect to only apply transform if window.innerWidth >= 768.
