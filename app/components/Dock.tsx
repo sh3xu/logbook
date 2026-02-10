@@ -1,17 +1,25 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { BookOpen, PlusCircle, Users, User, HelpCircle, Palette, MessageSquare } from "lucide-react"
-import { useUIStore, type AppKey } from "@/lib/ui-store"
-import { cn, getTodayDateString } from "@/lib/utils"
+import type React from "react";
+import {
+  BookOpen,
+  PlusCircle,
+  Users,
+  User,
+  HelpCircle,
+  Palette,
+  MessageSquare,
+} from "lucide-react";
+import { useUIStore, type AppKey } from "@/lib/ui-store";
+import { cn, getTodayDateString } from "@/lib/utils";
 
-const ACCENT = "#FF2E63"
+const ACCENT = "#FF2E63";
 
 type DockItem = {
-  key: Exclude<AppKey, "palette" | null>
-  label: string
-  icon: React.ComponentType<any>
-}
+  key: Exclude<AppKey, "palette" | null>;
+  label: string;
+  icon: React.ComponentType<any>;
+};
 
 const ITEMS: DockItem[] = [
   { key: "entry", label: "New Entry", icon: PlusCircle },
@@ -19,28 +27,27 @@ const ITEMS: DockItem[] = [
   { key: "friends", label: "Friends", icon: Users },
   { key: "profile", label: "Profile", icon: User },
   { key: "requests", label: "Features", icon: MessageSquare },
-]
+];
 
 export default function Dock({
   activeApp = null,
   onOpen = () => {},
   onOpenPalette = () => {},
 }: {
-  activeApp?: AppKey | null
-  onOpen?: (k: Exclude<AppKey, "palette" | null>) => void
-  onOpenPalette?: () => void
+  activeApp?: AppKey | null;
+  onOpen?: (k: Exclude<AppKey, "palette" | null>) => void;
+  onOpenPalette?: () => void;
 }) {
-  const { entries, profile } = useUIStore()
-  const todayEntryExists = entries.some(e => e.date === getTodayDateString())
-
+  const { entries, profile } = useUIStore();
+  const todayEntryExists = entries.some((e) => e.date === getTodayDateString());
 
   return (
     <div className="flex items-center gap-3 bg-white border-[3px] border-black px-3 py-3 rounded-xl shadow-[6px_6px_0_0_#000]">
       {ITEMS.map((it) => {
-        const Icon = it.icon
-        const isActive = activeApp === it.key
-        const isEntryApp = it.key === "entry"
-        const isDisabled = isEntryApp && todayEntryExists
+        const Icon = it.icon;
+        const isActive = activeApp === it.key;
+        const isEntryApp = it.key === "entry";
+        const isDisabled = isEntryApp && todayEntryExists;
 
         return (
           <button
@@ -49,20 +56,26 @@ export default function Dock({
             disabled={isDisabled}
             className={cn(
               "relative w-12 h-12 md:w-18 md:h-18 grid place-items-center border-[3px] border-black rounded-lg transition-all",
-              isActive ? "shadow-[4px_4px_0_0_#000] md:shadow-[6px_6px_0_0_#000] bg-[#FAFAF0]" : "shadow-[3px_3px_0_0_#000] md:shadow-[4px_4px_0_0_#000] bg-[#FAFAF0]",
-              isDisabled 
-                ? "opacity-50 grayscale cursor-not-allowed border-gray-300 shadow-none bg-gray-50" 
+              isActive
+                ? "shadow-[4px_4px_0_0_#000] md:shadow-[6px_6px_0_0_#000] bg-[#FAFAF0]"
+                : "shadow-[3px_3px_0_0_#000] md:shadow-[4px_4px_0_0_#000] bg-[#FAFAF0]",
+              isDisabled
+                ? "opacity-50 grayscale cursor-not-allowed border-gray-300 shadow-none bg-gray-50"
                 : "hover:translate-y-[-2px]",
               "focus-visible:outline-4",
             )}
             style={{ outlineColor: ACCENT }}
             aria-label={it.label}
-            title={isDisabled ? "Today already logged. Delete to re-enter." : it.label}
+            title={
+              isDisabled
+                ? "Today already logged. Delete to re-enter."
+                : it.label
+            }
           >
             <Icon className="w-5 h-5 md:w-7 md:h-7" />
             <span className="sr-only">{it.label}</span>
           </button>
-        )
+        );
       })}
 
       {/* <div className="mx-1 w-[2px] self-stretch bg-black/20" />
@@ -81,5 +94,5 @@ export default function Dock({
         <span className="sr-only">Command Palette</span>
       </button> */}
     </div>
-  )
+  );
 }

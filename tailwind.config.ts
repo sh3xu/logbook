@@ -63,6 +63,15 @@ const config: Config = {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+        app: {
+          bg: 'hsl(var(--app-bg))',
+          panel: 'hsl(var(--app-panel))',
+          text: 'hsl(var(--app-text))',
+          accent: 'hsl(var(--app-accent))',
+          'accent-foreground': 'hsl(var(--app-accent-foreground))',
+          muted: 'hsl(var(--app-muted))',
+          border: 'hsl(var(--app-border))',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

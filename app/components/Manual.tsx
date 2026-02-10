@@ -1,57 +1,64 @@
-"use client"
-import { useState } from "react"
-import { AlertTriangle, Trash2, Loader2 } from "lucide-react"
-import { supabase } from "@/lib/supabase"
-import { useUIStore } from "@/lib/ui-store"
+"use client";
+import { useState } from "react";
+import { AlertTriangle, Trash2, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useUIStore } from "@/lib/ui-store";
 
 export default function Manual() {
-  const [isPurging, setIsPurging] = useState(false)
-  const { addNotification } = useUIStore()
+  const [isPurging, setIsPurging] = useState(false);
+  const { addNotification } = useUIStore();
 
   const handlePurgeData = async () => {
     const confirmed = window.confirm(
-      "CRITICAL ACTION: Are you absolutely sure? This will delete all your entries, your profile, and social connections. This cannot be undone."
-    )
-    
-    if (!confirmed) return
+      "CRITICAL ACTION: Are you absolutely sure? This will delete all your entries, your profile, and social connections. This cannot be undone.",
+    );
 
-    setIsPurging(true)
+    if (!confirmed) return;
+
+    setIsPurging(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("Authentication required")
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Authentication required");
 
       // Try the RPC first for a clean full wipe
-      const { error: rpcErr } = await supabase.rpc("delete_user_account")
-      
+      const { error: rpcErr } = await supabase.rpc("delete_user_account");
+
       if (rpcErr) {
-        console.warn("RPC purge failed, falling back to manual deletion:", rpcErr)
-        
+        console.warn(
+          "RPC purge failed, falling back to manual deletion:",
+          rpcErr,
+        );
+
         // Fallback: Delete high-level data manually
-        await supabase.from("entries").delete().eq("user_id", user.id)
-        await supabase.from("friends").delete().or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
-        await supabase.from("profiles").delete().eq("id", user.id)
+        await supabase.from("entries").delete().eq("user_id", user.id);
+        await supabase
+          .from("friends")
+          .delete()
+          .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`);
+        await supabase.from("profiles").delete().eq("id", user.id);
       }
 
       // Final step: Sign Out
-      await supabase.auth.signOut()
-      
-      // Force reload to lander
-      window.location.reload()
+      await supabase.auth.signOut();
 
+      // Force reload to lander
+      window.location.reload();
     } catch (err: any) {
-      console.error("Purge failed:", err)
-      alert(`Purge failed: ${err.message}`)
+      console.error("Purge failed:", err);
+      alert(`Purge failed: ${err.message}`);
       addNotification({
         id: Date.now().toString(),
         type: "entry_saved",
         message: `Purge failed: ${err.message}`,
         timestamp: "just now",
         read: false,
-      })
+      });
     } finally {
-      setIsPurging(false)
+      setIsPurging(false);
     }
-  }
+  };
 
   const sections = [
     {
@@ -119,17 +126,24 @@ export default function Manual() {
       content:
         "Your Master Key is stored only in temporary memory (sessionStorage) while your tab is open. When you close the tab or logout, the key is permanently removed from the device. This means your data is safe even if you forget to logout, as long as the tab is closed. However, we recommend logging out if you share your device with others.",
     },
-  ]
+  ];
 
   return (
     <div className="p-6 space-y-4 bg-white h-full overflow-y-auto">
-      <div className="text-2xl font-black mb-6 sticky top-0 bg-white">User Manual</div>
+      <div className="text-2xl font-black mb-6 sticky top-0 bg-white">
+        User Manual
+      </div>
 
       <div className="space-y-4">
         {sections.map((section, idx) => (
-          <div key={idx} className="p-4 border-[3px] border-black bg-white shadow-[4px_4px_0_0_#000]">
+          <div
+            key={idx}
+            className="p-4 border-[3px] border-black bg-white shadow-[4px_4px_0_0_#000]"
+          >
             <div className="text-lg font-black mb-2">{section.title}</div>
-            <div className="text-sm leading-relaxed text-gray-800">{section.content}</div>
+            <div className="text-sm leading-relaxed text-gray-800">
+              {section.content}
+            </div>
           </div>
         ))}
       </div>
@@ -139,10 +153,12 @@ export default function Manual() {
           <AlertTriangle className="w-6 h-6" /> Danger Zone
         </div>
         <p className="text-sm font-bold text-gray-700 leading-tight">
-          This action is <span className="underline decoration-2">PERMANENT</span> and cannot be undone. 
-          All your encrypted entries, profile information, and social connections will be wiped from our systems forever.
+          This action is{" "}
+          <span className="underline decoration-2">PERMANENT</span> and cannot
+          be undone. All your encrypted entries, profile information, and social
+          connections will be wiped from our systems forever.
         </p>
-        
+
         <button
           onClick={handlePurgeData}
           disabled={isPurging}
@@ -164,10 +180,13 @@ export default function Manual() {
         <ul className="text-sm mt-2 space-y-1 list-disc list-inside">
           <li>Create entries daily for best streak tracking</li>
           <li>Be honest about challenges - reflection leads to growth</li>
-          <li>Review past entries to identify patterns in your mood and productivity</li>
+          <li>
+            Review past entries to identify patterns in your mood and
+            productivity
+          </li>
           <li>Share achievements with friends for extra motivation</li>
         </ul>
       </div>
     </div>
-  )
+  );
 }

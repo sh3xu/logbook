@@ -1,115 +1,128 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react";
 
-import { useUIStore, type AppKey } from "@/lib/ui-store"
-import Eyes from "./components/Eyes"
-import Dock from "./components/Dock"
-import DesktopWindow from "./components/Window"
-import CommandPalette from "./components/CommandPalette"
-import Logbook from "./components/Logbook"
-import Entry from "./components/Entry"
-import Friends from "./components/Friends"
-import Profile from "./components/Profile"
-import Manual from "./components/Manual"
-import Notifications from "./components/Notifications"
-import KeySection from "./components/KeySection"
-import FeatureRequests from "./components/FeatureRequests"
-import { HelpCircle, LogOut } from "lucide-react"
-import { supabase } from "@/lib/supabase"
-import Modal from "./components/Modal"
+import { useUIStore, type AppKey } from "@/lib/ui-store";
+import Eyes from "./components/Eyes";
+import Dock from "./components/Dock";
+import DesktopWindow from "./components/Window";
+import CommandPalette from "./components/CommandPalette";
+import Logbook from "./components/Logbook";
+import Entry from "./components/Entry";
+import Friends from "./components/Friends";
+import Profile from "./components/Profile";
+import Manual from "./components/Manual";
+import Notifications from "./components/Notifications";
+import KeySection from "./components/KeySection";
+import FeatureRequests from "./components/FeatureRequests";
+import { HelpCircle, LogOut } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import Modal from "./components/Modal";
 
 type WindowSpec = {
-  key: Exclude<AppKey, "palette" | null>
-  title: string
-  content: React.ReactNode
-}
+  key: Exclude<AppKey, "palette" | null>;
+  title: string;
+  content: React.ReactNode;
+};
 
-import { useAuth } from "@/hooks/use-auth"
-import Landing from "@/components/Landing"
-import { useInactivityTimer } from "@/hooks/use-inactivity-timer"
+import { useAuth } from "@/hooks/use-auth";
+import Landing from "@/components/Landing";
+import { useInactivityTimer } from "@/hooks/use-inactivity-timer";
 
 export default function Page() {
-  const { session, loading } = useAuth()
-  useInactivityTimer()
+  const { session, loading } = useAuth();
+  useInactivityTimer();
 
-  const [openApps, setOpenApps] = useState<Exclude<AppKey, "palette" | null>[]>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("logbook-open-apps")
-      try {
-        return stored ? JSON.parse(stored) : ["logbook"]
-      } catch {
-        return ["logbook"]
+  const [openApps, setOpenApps] = useState<Exclude<AppKey, "palette" | null>[]>(
+    () => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("logbook-open-apps");
+        try {
+          return stored ? JSON.parse(stored) : ["logbook"];
+        } catch {
+          return ["logbook"];
+        }
       }
-    }
-    return ["logbook"]
-  })
-  const [paletteOpen, setPaletteOpen] = useState(false)
-  const { setActiveApp, activeApp, setWindowLayout, windowLayouts, setProfile, entries } = useUIStore()
+      return ["logbook"];
+    },
+  );
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const {
+    setActiveApp,
+    activeApp,
+    setWindowLayout,
+    windowLayouts,
+    setProfile,
+    entries,
+  } = useUIStore();
 
-  const [activeTopBarItem, setActiveTopBarItem] = useState<"key" | "notifications" | null>(null)
+  const [activeTopBarItem, setActiveTopBarItem] = useState<
+    "key" | "notifications" | null
+  >(null);
 
   useEffect(() => {
     async function fetchProfile() {
-      if (!session?.user) return
+      if (!session?.user) return;
 
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", session.user.id)
-        .maybeSingle()
+        .maybeSingle();
 
       if (data && !error) {
         setProfile({
           id: data.id,
           username: data.username,
           name: data.full_name || "",
-          avatar: data.avatar_url || (data.full_name ? data.full_name.charAt(0).toUpperCase() : "?"),
+          avatar:
+            data.avatar_url ||
+            (data.full_name ? data.full_name.charAt(0).toUpperCase() : "?"),
           bio: data.bio || "",
           joinDate: data.created_at,
           totalEntries: entries.length,
           currentStreak: 0,
           isAdmin: data.is_admin || false,
-        })
+        });
       }
     }
-    fetchProfile()
-  }, [session, setProfile, entries.length])
+    fetchProfile();
+  }, [session, setProfile, entries.length]);
 
   useEffect(() => {
     if (session) {
       if (openApps.length > 0) {
-        setActiveApp(openApps[openApps.length - 1])
+        setActiveApp(openApps[openApps.length - 1]);
       } else {
-        setActiveApp(null)
+        setActiveApp(null);
       }
     }
-  }, [setActiveApp, session, openApps.length])
+  }, [setActiveApp, session, openApps.length]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("logbook-open-apps", JSON.stringify(openApps))
+      localStorage.setItem("logbook-open-apps", JSON.stringify(openApps));
     }
-  }, [openApps])
+  }, [openApps]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         if (paletteOpen) {
-          setPaletteOpen(false)
-          setActiveApp(null)
-          return
+          setPaletteOpen(false);
+          setActiveApp(null);
+          return;
         }
         if (openApps.length > 0) {
-          const top = openApps[openApps.length - 1]
-          closeApp(top)
-          return
+          const top = openApps[openApps.length - 1];
+          closeApp(top);
+          return;
         }
       }
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [paletteOpen, openApps])
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [paletteOpen, openApps]);
 
   const windows: WindowSpec[] = useMemo(
     () => [
@@ -118,85 +131,90 @@ export default function Page() {
       { key: "friends", title: "Friends", content: <Friends /> },
       { key: "profile", title: "Profile", content: <Profile /> },
       { key: "manual", title: "Manual", content: <Manual /> },
-      { key: "requests", title: "Feature Requests", content: <FeatureRequests /> },
+      {
+        key: "requests",
+        title: "Feature Requests",
+        content: <FeatureRequests />,
+      },
     ],
     [],
-  )
+  );
 
   function openApp(app: Exclude<AppKey, "palette" | null>) {
     setOpenApps((prev) => {
       if (typeof window !== "undefined" && window.innerWidth < 768) {
-        return [app]
+        return [app];
       }
-      
+
       if (prev.includes(app)) {
-        const without = prev.filter((a) => a !== app)
-        return [...without, app]
+        const without = prev.filter((a) => a !== app);
+        return [...without, app];
       }
-      return [...prev, app]
-    })
-    setWindowLayout(app, { isOpen: true })
-    setActiveApp(app)
-    setActiveTopBarItem(null)
+      return [...prev, app];
+    });
+    setWindowLayout(app, { isOpen: true });
+    setActiveApp(app);
+    setActiveTopBarItem(null);
   }
 
   function closeApp(app: Exclude<AppKey, "palette" | null>) {
-    setOpenApps((prev) => prev.filter((a) => a !== app))
-    setWindowLayout(app, { isOpen: false })
-    setActiveApp(null)
+    setOpenApps((prev) => prev.filter((a) => a !== app));
+    setWindowLayout(app, { isOpen: false });
+    setActiveApp(null);
   }
 
   function focusApp(app: Exclude<AppKey, "palette" | null>) {
     setOpenApps((prev) => {
-      const without = prev.filter((a) => a !== app)
-      return [...without, app]
-    })
-    setActiveApp(app)
+      const without = prev.filter((a) => a !== app);
+      return [...without, app];
+    });
+    setActiveApp(app);
   }
   const [modal, setModal] = useState<{
-    isOpen: boolean
-    title: string
-    message: string
-    type: "confirm" | "alert"
-    onConfirm: () => void
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: "confirm" | "alert";
+    onConfirm: () => void;
   }>({
     isOpen: false,
     title: "",
     message: "",
     type: "alert",
     onConfirm: () => {},
-  })
+  });
 
   function resetAll() {
-    setOpenApps(["logbook"])
-    setPaletteOpen(false)
-    setActiveApp("logbook")
-    
+    setOpenApps(["logbook"]);
+    setPaletteOpen(false);
+    setActiveApp("logbook");
+
     setModal({
       isOpen: true,
       title: "Full Reset Protocol",
-      message: "Are you sure you want to reset your desktop layout? This will clear all window positions and reload the session.",
+      message:
+        "Are you sure you want to reset your desktop layout? This will clear all window positions and reload the session.",
       type: "confirm",
       onConfirm: () => {
-        localStorage.removeItem("logbook-window-layouts")
-        localStorage.removeItem("logbook-open-apps")
-        window.location.reload()
-      }
-    })
+        localStorage.removeItem("logbook-window-layouts");
+        localStorage.removeItem("logbook-open-apps");
+        window.location.reload();
+      },
+    });
   }
 
-  const { isReencrypting, reencryptionProgress } = useUIStore()
+  const { isReencrypting, reencryptionProgress } = useUIStore();
 
   if (loading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-[#FAFAF0]">
         <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin" />
       </div>
-    )
+    );
   }
 
   if (!session) {
-    return <Landing />
+    return <Landing />;
   }
 
   return (
@@ -215,7 +233,8 @@ export default function Page() {
       <div
         className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-30"
         style={{
-          backgroundImage: "radial-gradient(rgba(0,0,0,0.04) 1px, transparent 1px)",
+          backgroundImage:
+            "radial-gradient(rgba(0,0,0,0.04) 1px, transparent 1px)",
           backgroundSize: "2px 2px",
         }}
       />
@@ -229,21 +248,27 @@ export default function Page() {
           title="User Manual"
         >
           <HelpCircle className="w-4 h-4 md:w-6 md:h-6" />
-          <span className="font-black text-xs uppercase hidden md:inline">Help</span>
+          <span className="font-black text-xs uppercase hidden md:inline">
+            Help
+          </span>
         </button>
-        <KeySection 
-          isOpen={activeTopBarItem === "key"} 
+        <KeySection
+          isOpen={activeTopBarItem === "key"}
           onToggle={() => {
-            setActiveTopBarItem(prev => prev === "key" ? null : "key")
+            setActiveTopBarItem((prev) => (prev === "key" ? null : "key"));
             if (activeTopBarItem !== "key" && window.innerWidth < 768) {
-               // Optional: close active app if opening key on mobile? 
-               // For now, let's just let it overlay.
+              // Optional: close active app if opening key on mobile?
+              // For now, let's just let it overlay.
             }
           }}
         />
-        <Notifications 
-          isOpen={activeTopBarItem === "notifications"} 
-          onToggle={() => setActiveTopBarItem(prev => prev === "notifications" ? null : "notifications")}
+        <Notifications
+          isOpen={activeTopBarItem === "notifications"}
+          onToggle={() =>
+            setActiveTopBarItem((prev) =>
+              prev === "notifications" ? null : "notifications",
+            )
+          }
         />
         <button
           onClick={() => supabase.auth.signOut()}
@@ -251,15 +276,17 @@ export default function Page() {
           title="Logout"
         >
           <LogOut className="w-4 h-4 md:w-6 md:h-6 group-hover:text-[#FF2E63] transition-colors" />
-          <span className="font-black text-xs uppercase hidden md:inline">Logout</span>
+          <span className="font-black text-xs uppercase hidden md:inline">
+            Logout
+          </span>
         </button>
       </div>
 
-      <div className="absolute inset-0 z-10">
+      <div className="absolute inset-0 z-10 overflow-hidden">
         {windows
           .filter((w) => openApps.includes(w.key))
           .map((w) => {
-            const zIndex = 100 + openApps.indexOf(w.key)
+            const zIndex = 100 + openApps.indexOf(w.key);
             return (
               <DesktopWindow
                 key={w.key}
@@ -271,7 +298,7 @@ export default function Page() {
               >
                 {w.content}
               </DesktopWindow>
-            )
+            );
           })}
       </div>
 
@@ -280,8 +307,8 @@ export default function Page() {
           activeApp={activeApp ?? null}
           onOpen={(k) => openApp(k)}
           onOpenPalette={() => {
-            setPaletteOpen(true)
-            setActiveApp("palette")
+            setPaletteOpen(true);
+            setActiveApp("palette");
           }}
         />
       </div>
@@ -289,13 +316,13 @@ export default function Page() {
       <CommandPalette
         open={paletteOpen}
         onOpenChange={(o) => {
-          setPaletteOpen(o)
-          if (!o) setActiveApp(null)
-          if (o) setActiveApp("palette")
+          setPaletteOpen(o);
+          if (!o) setActiveApp(null);
+          if (o) setActiveApp("palette");
         }}
         onAction={(k) => {
-          openApp(k)
-          setPaletteOpen(false)
+          openApp(k);
+          setPaletteOpen(false);
         }}
         onReset={resetAll}
       />
@@ -305,34 +332,38 @@ export default function Page() {
           <div className="max-w-md w-full space-y-8 text-center animate-in zoom-in-95 duration-300">
             <div className="w-24 h-24 border-[8px] border-white border-t-[#FF2E63] rounded-full animate-spin mx-auto shadow-[0_0_30px_rgba(255,46,99,0.3)]" />
             <div className="space-y-2">
-              <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Securing Vault</h2>
-              <p className="text-[#FF2E63] font-bold text-sm tracking-widest animate-pulse uppercase">Re-encrypting all data with new master key</p>
+              <h2 className="text-4xl font-black text-white uppercase tracking-tighter">
+                Securing Vault
+              </h2>
+              <p className="text-[#FF2E63] font-bold text-sm tracking-widest animate-pulse uppercase">
+                Re-encrypting all data with new master key
+              </p>
             </div>
-            
+
             <div className="relative h-8 bg-white/10 border-[3px] border-white p-1 overflow-hidden">
-               <div 
-                 className="h-full bg-white transition-all duration-300 ease-out"
-                 style={{ width: `${reencryptionProgress}%` }}
-               />
-               <span className="absolute inset-0 flex items-center justify-center mix-blend-difference text-white font-black text-xs">
-                 {Math.round(reencryptionProgress)}% COMPLETE
-               </span>
+              <div
+                className="h-full bg-white transition-all duration-300 ease-out"
+                style={{ width: `${reencryptionProgress}%` }}
+              />
+              <span className="absolute inset-0 flex items-center justify-center mix-blend-difference text-white font-black text-xs">
+                {Math.round(reencryptionProgress)}% COMPLETE
+              </span>
             </div>
-            
+
             <p className="text-white/40 text-[10px] font-bold uppercase italic tracking-widest">
               DO NOT CLOSE BROWSER · SECURITY INTEGRITY IN PROGRESS
             </p>
           </div>
         </div>
       )}
-      <Modal 
+      <Modal
         isOpen={modal.isOpen}
         title={modal.title}
         message={modal.message}
         type={modal.type}
         onConfirm={modal.onConfirm}
-        onCancel={() => setModal(prev => ({ ...prev, isOpen: false }))}
+        onCancel={() => setModal((prev) => ({ ...prev, isOpen: false }))}
       />
     </main>
-  )
+  );
 }
