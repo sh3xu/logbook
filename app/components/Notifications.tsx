@@ -5,8 +5,24 @@ import { useUIStore } from "@/lib/ui-store"
 import { Bell, X, Trash2, CheckSquare } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
-export default function Notifications() {
-  const [isOpen, setIsOpen] = useState(false)
+export default function Notifications({
+  isOpen: externalIsOpen,
+  onToggle,
+}: {
+  isOpen?: boolean
+  onToggle?: () => void
+} = {}) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false)
+  const isControlled = typeof externalIsOpen === "boolean"
+  const isOpen = isControlled ? externalIsOpen : internalIsOpen
+  const handleToggle = () => {
+    if (isControlled && onToggle) {
+      onToggle()
+    } else {
+      setInternalIsOpen(!internalIsOpen)
+    }
+  }
+
   const { notifications, setNotifications } = useUIStore()
 
   const unreadCount = notifications.filter((n) => !n.read).length
@@ -79,10 +95,10 @@ export default function Notifications() {
   return (
     <div className="relative">
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative p-3 border-[3px] border-black bg-white shadow-[4px_4px_0_0_#000] hover:shadow-[6px_6px_0_0_#000] transition-all"
+        onClick={handleToggle}
+        className="relative p-2 md:p-3 border-[3px] border-black bg-white shadow-[4px_4px_0_0_#000] hover:shadow-[6px_6px_0_0_#000] transition-all"
       >
-        <Bell className="w-6 h-6" />
+        <Bell className="w-4 h-4 md:w-6 md:h-6" />
         {unreadCount > 0 && (
           <div className="absolute -top-2 -right-2 bg-[#FF2E63] border-[2px] border-black text-white font-black text-xs min-w-[24px] h-6 flex items-center justify-center rounded-sm px-1">
             {unreadCount}
@@ -91,13 +107,16 @@ export default function Notifications() {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-4 w-96 border-[3px] border-black bg-white shadow-[8px_8px_0_0_#000] p-0 z-50 animate-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-full right-0 mt-4 w-[85vw] md:w-96 border-[3px] border-black bg-white shadow-[8px_8px_0_0_#000] p-0 z-50 animate-in slide-in-from-top-2 duration-200">
           <div className="p-5 border-b-[3px] border-black flex items-center justify-between bg-black text-white">
             <div className="flex items-center gap-2">
               <Bell size={18} />
               <span className="font-black text-xs uppercase tracking-widest">Signal Queue</span>
             </div>
-            <button onClick={() => setIsOpen(false)} className="hover:rotate-90 transition-transform">
+            <button onClick={() => {
+              if (isControlled && onToggle) onToggle()
+              else setInternalIsOpen(false)
+            }} className="hover:rotate-90 transition-transform">
               <X size={20} />
             </button>
           </div>

@@ -32,7 +32,7 @@ export default function DesktopWindow({
       const centerY = Math.max(40, (window.innerHeight - 500) / 2)
       return { x: centerX, y: centerY }
     }
-    return { x: 120, y: 120 }
+    return { x: 20, y: 80 }
   }
 
   const winRef = useRef<HTMLDivElement | null>(null)
@@ -46,8 +46,13 @@ export default function DesktopWindow({
 
   const applyTransform = () => {
     if (!winRef.current) return
-    const { x, y } = pos.current
-    winRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`
+    // Only apply transform on desktop (md breakpoint is usually 768px, lets use 768)
+    if (window.innerWidth >= 768) {
+      const { x, y } = pos.current
+      winRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`
+    } else {
+      winRef.current.style.transform = "none"
+    }
   }
 
   // Ensure we apply the initial/correct transform on mount
@@ -67,7 +72,12 @@ export default function DesktopWindow({
     const el = headerRef.current
     if (!el) return
 
+    // Mobile check to disable dragging logic entirely
+    if (window.innerWidth < 768) return
+
     const onPointerDown = (e: PointerEvent) => {
+      // Double check inside handler just in case of resize
+      if (window.innerWidth < 768) return
       grabbing.current = true
       onFocus()
       start.current = { x: e.clientX, y: e.clientY, sx: pos.current.x, sy: pos.current.y }
@@ -102,40 +112,55 @@ export default function DesktopWindow({
       window.removeEventListener("pointerup", onPointerUp)
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
-  }, [onFocus])
+  }, [onFocus, appKey])
 
   return (
     <div
       ref={winRef}
-      className="absolute top-0 left-0 w-[min(92vw,1000px)] md:w-[800px] will-change-transform"
+      className={cn(
+        "will-change-transform",
+        // Mobile: Fixed position with space for Top Bar and Dock
+        // Top Bar ~60px, Dock ~90px.
+        // We use safe margins to ensure it doesn't overlap.
+        "fixed left-4 right-4 top-20 bottom-28 z-[35] flex flex-col", 
+        "md:absolute md:inset-auto md:top-0 md:left-0 md:w-[800px] md:block md:p-0 md:z-auto", // Desktop overrides
+      )}
       style={{ 
-        zIndex, 
-        transform: `translate3d(${pos.current.x}px, ${pos.current.y}px, 0)` 
+        // Use styled zIndex on desktop, but on mobile we fixed it to 35 via class (which might be overridden by style, so we need to be careful).
+        // The inline style 'zIndex' will override the tailwind class 'z-[35]'.
+        // We should probably rely on the layout constraints to avoid overlap.
+        zIndex: typeof window !== 'undefined' && window.innerWidth < 768 ? 35 : zIndex,
+        // Only apply transform on desktop
       }}
+      // We will conditionally apply the transform via ref in the useEffect or just override it in CSS.
+      // Let's modify the useEffect to only apply transform if window.innerWidth >= 768.
       onMouseDown={onFocus}
+      onTouchStart={onFocus}
     >
-      <div className="border-[3px] border-black bg-white shadow-[10px_10px_0_0_#000] rounded-md overflow-hidden">
+      <div className="w-full h-full border-[3px] border-black bg-white shadow-[6px_6px_0_0_#000] md:shadow-[10px_10px_0_0_#000] rounded-md overflow-hidden flex flex-col">
         <div
           ref={headerRef}
           className={cn(
-            "flex items-center justify-between px-3 py-2 border-b-[3px] border-black cursor-grab active:cursor-grabbing",
+            "flex items-center justify-between px-3 py-2 border-b-[3px] border-black touch-none shrink-0",
             "bg-[#FAFAF0]",
+            "pointer-events-none md:pointer-events-auto md:cursor-grab md:active:cursor-grabbing" // Disable drag on mobile
           )}
           style={{ userSelect: "none" }}
         >
           <div className="flex items-center gap-2">
-            <GripVertical className="w-5 h-5" aria-hidden="true" />
-            <div className="font-black text-xl">{title}</div>
+            <GripVertical className="w-5 h-5 hidden md:block" aria-hidden="true" />
+             {/* Show title centered or left depending on preference, keep as is */}
+            <div className="font-black text-lg md:text-xl truncate">{title}</div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 grid place-items-center border-[3px] border-black rounded-md bg-white hover:translate-y-[-1px] transition-transform"
+            className="w-8 h-8 grid place-items-center border-[3px] border-black rounded-md bg-white hover:translate-y-[-1px] transition-transform hidden md:grid" // Hide close on mobile
             aria-label={`Close ${title}`}
           >
             <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="max-h-[60vh] md:max-h-[65vh] overflow-auto bg-white">{children}</div>
+        <div className="flex-1 overflow-auto bg-white overscroll-contain">{children}</div>
       </div>
     </div>
   )

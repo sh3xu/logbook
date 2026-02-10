@@ -48,8 +48,8 @@ export default function Dock({
             onClick={() => !isDisabled && onOpen(it.key)}
             disabled={isDisabled}
             className={cn(
-              "relative w-16 h-16 md:w-18 md:h-18 grid place-items-center border-[3px] border-black rounded-lg transition-all",
-              isActive ? "shadow-[6px_6px_0_0_#000] bg-[#FAFAF0]" : "shadow-[4px_4px_0_0_#000] bg-[#FAFAF0]",
+              "relative w-12 h-12 md:w-18 md:h-18 grid place-items-center border-[3px] border-black rounded-lg transition-all",
+              isActive ? "shadow-[4px_4px_0_0_#000] md:shadow-[6px_6px_0_0_#000] bg-[#FAFAF0]" : "shadow-[3px_3px_0_0_#000] md:shadow-[4px_4px_0_0_#000] bg-[#FAFAF0]",
               isDisabled 
                 ? "opacity-50 grayscale cursor-not-allowed border-gray-300 shadow-none bg-gray-50" 
                 : "hover:translate-y-[-2px]",
@@ -59,7 +59,7 @@ export default function Dock({
             aria-label={it.label}
             title={isDisabled ? "Today already logged. Delete to re-enter." : it.label}
           >
-            <Icon className="w-7 h-7" />
+            <Icon className="w-5 h-5 md:w-7 md:h-7" />
             <span className="sr-only">{it.label}</span>
           </button>
         )

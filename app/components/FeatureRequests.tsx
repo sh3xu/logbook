@@ -190,7 +190,7 @@ export default function FeatureRequests() {
   const isLocked = lastRequestDate === new Date().toDateString() && !profile.isAdmin
 
   return (
-    <div className="p-6 space-y-8 bg-white max-h-[600px] overflow-y-auto selection:bg-black selection:text-white">
+    <div className="p-4 md:p-6 space-y-8 bg-white max-h-[600px] overflow-y-auto selection:bg-black selection:text-white">
       {!profile.isAdmin && (
         <div className="space-y-4">
           <h2 className="text-xl font-black uppercase flex items-center gap-2">

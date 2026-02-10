@@ -46,6 +46,8 @@ export default function Page() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const { setActiveApp, activeApp, setWindowLayout, windowLayouts, setProfile, entries } = useUIStore()
 
+  const [activeTopBarItem, setActiveTopBarItem] = useState<"key" | "notifications" | null>(null)
+
   // Sync profile and admin status on session change
   useEffect(() => {
     async function fetchProfile() {
@@ -126,6 +128,11 @@ export default function Page() {
 
   function openApp(app: Exclude<AppKey, "palette" | null>) {
     setOpenApps((prev) => {
+      // Mobile check: Single app mode
+      if (typeof window !== "undefined" && window.innerWidth < 768) {
+        return [app]
+      }
+      
       if (prev.includes(app)) {
         const without = prev.filter((a) => a !== app)
         return [...without, app]
@@ -134,6 +141,7 @@ export default function Page() {
     })
     setWindowLayout(app, { isOpen: true })
     setActiveApp(app)
+    setActiveTopBarItem(null)
   }
 
   function closeApp(app: Exclude<AppKey, "palette" | null>) {
@@ -222,23 +230,35 @@ export default function Page() {
       <Eyes activeApp={activeApp ?? null} />
 
       {/* Top Bar (Notifications + Key + Manual + Logout) */}
-      <div className="fixed top-6 right-6 z-40 flex items-center gap-4">
+      <div className="fixed top-3 right-3 md:top-6 md:right-6 z-40 flex items-center gap-2 md:gap-4">
         <button
           onClick={() => openApp("manual")}
-          className="p-3 border-[3px] border-black bg-white shadow-[4px_4px_0_0_#000] hover:shadow-[6px_6px_0_0_#000] transition-all flex items-center gap-2"
+          className="p-2 md:p-3 border-[3px] border-black bg-white shadow-[4px_4px_0_0_#000] hover:shadow-[6px_6px_0_0_#000] transition-all flex items-center gap-2"
           title="User Manual"
         >
-          <HelpCircle className="w-6 h-6" />
+          <HelpCircle className="w-4 h-4 md:w-6 md:h-6" />
           <span className="font-black text-xs uppercase hidden md:inline">Help</span>
         </button>
-        <KeySection />
-        <Notifications />
+        <KeySection 
+          isOpen={activeTopBarItem === "key"} 
+          onToggle={() => {
+            setActiveTopBarItem(prev => prev === "key" ? null : "key")
+            if (activeTopBarItem !== "key" && window.innerWidth < 768) {
+               // Optional: close active app if opening key on mobile? 
+               // For now, let's just let it overlay.
+            }
+          }}
+        />
+        <Notifications 
+          isOpen={activeTopBarItem === "notifications"} 
+          onToggle={() => setActiveTopBarItem(prev => prev === "notifications" ? null : "notifications")}
+        />
         <button
           onClick={() => supabase.auth.signOut()}
-          className="p-3 border-[3px] border-black bg-white shadow-[4px_4px_0_0_#000] hover:shadow-[6px_6px_0_0_#000] transition-all flex items-center gap-2 group"
+          className="p-2 md:p-3 border-[3px] border-black bg-white shadow-[4px_4px_0_0_#000] hover:shadow-[6px_6px_0_0_#000] transition-all flex items-center gap-2 group"
           title="Logout"
         >
-          <LogOut className="w-6 h-6 group-hover:text-[#FF2E63] transition-colors" />
+          <LogOut className="w-4 h-4 md:w-6 md:h-6 group-hover:text-[#FF2E63] transition-colors" />
           <span className="font-black text-xs uppercase hidden md:inline">Logout</span>
         </button>
       </div>

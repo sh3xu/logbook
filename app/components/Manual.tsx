@@ -122,7 +122,7 @@ export default function Manual() {
   ]
 
   return (
-    <div className="p-6 space-y-4 bg-white max-h-[600px] overflow-y-auto">
+    <div className="p-6 space-y-4 bg-white h-full overflow-y-auto">
       <div className="text-2xl font-black mb-6 sticky top-0 bg-white">User Manual</div>
 
       <div className="space-y-4">

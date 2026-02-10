@@ -132,7 +132,7 @@ export default function Logbook() {
   }
 
   return (
-    <div className="p-6 space-y-6 bg-white h-full overflow-y-auto selection:bg-black selection:text-white">
+    <div className="p-4 md:p-6 space-y-6 bg-white h-full overflow-y-auto selection:bg-black selection:text-white">
       <div className="flex items-center justify-between mb-6">
         <div className="text-2xl font-black uppercase tracking-tighter">Daily Logbook</div>
         <div className={`px-3 py-1 border-[2px] border-black text-[10px] font-black uppercase flex items-center gap-2 ${encryptionKey ? 'bg-green-100' : 'bg-yellow-100 shadow-[2px_2px_0_0_#000]'}`}>

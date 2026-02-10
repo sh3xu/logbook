@@ -229,7 +229,7 @@ export default function Friends() {
   }
 
   return (
-    <div className="p-6 bg-white h-full flex flex-col selection:bg-black selection:text-white">
+    <div className="p-4 md:p-6 bg-white h-full flex flex-col selection:bg-black selection:text-white">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl font-black uppercase tracking-tighter">Connection Hub</h2>
         <div className="flex gap-1">

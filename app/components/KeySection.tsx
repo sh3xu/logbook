@@ -6,14 +6,30 @@ import { Lock, Unlock, Key, Check, AlertTriangle, ShieldCheck, RefreshCw } from 
 import { hashKey, encryptMessage, decryptMessage } from "@/lib/encryption"
 import { supabase } from "@/lib/supabase"
 
-export default function KeySection() {
-  const [isOpen, setIsOpen] = useState(false)
+export default function KeySection({
+  isOpen: externalIsOpen,
+  onToggle,
+}: {
+  isOpen?: boolean
+  onToggle?: () => void
+} = {}) {
+  const [internalIsOpen, setInternalIsOpen] = useState(false)
   const [inputKey, setInputKey] = useState("")
   const [newKey, setNewKey] = useState("")
   const [isUpdating, setIsUpdating] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
+  const isControlled = typeof externalIsOpen === "boolean"
+  const isOpen = isControlled ? externalIsOpen : internalIsOpen
+  const handleToggle = () => {
+    if (isControlled && onToggle) {
+      onToggle()
+    } else {
+      setInternalIsOpen(!internalIsOpen)
+    }
+  }
+
   const { 
     encryptionKey, 
     setEncryptionKey, 
@@ -23,6 +39,7 @@ export default function KeySection() {
   } = useUIStore()
 
   const handleUnlock = async () => {
+    // ... logic remains same ...
     setLoading(true)
     setError(null)
     try {
@@ -40,7 +57,11 @@ export default function KeySection() {
       const inputHash = await hashKey(inputKey)
       if (inputHash === profile.key_hash) {
         setEncryptionKey(inputKey)
-        setIsOpen(false)
+        if (isControlled && onToggle) {
+          onToggle()
+        } else {
+          setInternalIsOpen(false)
+        }
         setInputKey("")
         addNotification({
           id: Date.now().toString(),
@@ -121,7 +142,11 @@ export default function KeySection() {
       setEncryptionKey(newKey)
       setNewKey("")
       setIsUpdating(false)
-      setIsOpen(false)
+      if (isControlled && onToggle) {
+        onToggle()
+      } else {
+        setInternalIsOpen(false)
+      }
       
       addNotification({
         id: Date.now().toString(),
@@ -143,30 +168,30 @@ export default function KeySection() {
   return (
     <div className="relative">
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`p-3 border-[3px] border-black shadow-[4px_4px_0_0_#000] hover:shadow-[6px_6px_0_0_#000] transition-all flex items-center gap-2 ${
+        onClick={handleToggle}
+        className={`p-2 md:p-3 border-[3px] border-black shadow-[4px_4px_0_0_#000] hover:shadow-[6px_6px_0_0_#000] transition-all flex items-center gap-2 ${
           encryptionKey ? "bg-green-100" : "bg-yellow-100"
         }`}
       >
-        {encryptionKey ? <Unlock className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
+        {encryptionKey ? <Unlock className="w-4 h-4 md:w-6 md:h-6" /> : <Lock className="w-4 h-4 md:w-6 md:h-6" />}
         <span className="font-black text-xs uppercase hidden md:inline">
           {encryptionKey ? "Unlocked" : "Locked"}
         </span>
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-80 border-[3px] border-black bg-white shadow-[8px_8px_0_0_#000] p-6 z-50 animate-in slide-in-from-top-2 duration-200">
-          <div className="flex items-center justify-between mb-6">
+        <div className="fixed top-14 left-4 right-4 w-auto md:absolute md:top-full md:right-0 md:mt-2 md:w-80 md:left-auto border-[3px] border-black bg-white shadow-[8px_8px_0_0_#000] p-4 md:p-6 z-50 animate-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
             <div className="flex items-center gap-2">
               <Key className="w-5 h-5" />
-              <span className="font-black text-sm uppercase tracking-tight">Security Vault</span>
+              <span className="font-black text-xs md:text-sm uppercase tracking-tight">Security Vault</span>
             </div>
             {encryptionKey && (
               <button 
                 onClick={() => setIsUpdating(!isUpdating)}
                 className="text-[10px] font-black uppercase text-blue-600 hover:underline"
               >
-                {isUpdating ? "Cancel Update" : "Update Key"}
+                {isUpdating ? "Cancel" : "Update Key"}
               </button>
             )}
           </div>
@@ -187,7 +212,7 @@ export default function KeySection() {
                   </p>
                   <button
                     onClick={() => setEncryptionKey(null)}
-                    className="w-full p-4 border-[3px] border-black bg-white hover:bg-black hover:text-white transition-all text-xs font-black uppercase shadow-[4px_4px_0_0_#000] active:shadow-none active:translate-x-1 active:translate-y-1"
+                    className="w-full p-3 md:p-4 border-[3px] border-black bg-white hover:bg-black hover:text-white transition-all text-xs font-black uppercase shadow-[4px_4px_0_0_#000] active:shadow-none active:translate-x-1 active:translate-y-1"
                   >
                     Lock Vault Now
                   </button>
@@ -231,7 +256,7 @@ export default function KeySection() {
                   onChange={(e) => setInputKey(e.target.value)}
                   placeholder="Enter Master Key"
                   autoComplete="off"
-                  className="w-full border-[3px] border-black p-4 text-sm font-bold outline-none focus:bg-yellow-50 shadow-[4px_4px_0_0_rgba(0,0,0,0.05)]"
+                  className="w-full border-[3px] border-black p-3 md:p-4 text-sm font-bold outline-none focus:bg-yellow-50 shadow-[4px_4px_0_0_rgba(0,0,0,0.05)]"
                 />
               </div>
               {error && (
@@ -243,7 +268,7 @@ export default function KeySection() {
               <button
                 onClick={handleUnlock}
                 disabled={loading || !inputKey}
-                className="w-full p-4 border-[3px] border-black bg-black text-white hover:bg-white hover:text-black transition-all text-xs font-black uppercase disabled:opacity-50 shadow-[4px_4px_0_0_#000] active:shadow-none"
+                className="w-full p-3 md:p-4 border-[3px] border-black bg-black text-white hover:bg-white hover:text-black transition-all text-xs font-black uppercase disabled:opacity-50 shadow-[4px_4px_0_0_#000] active:shadow-none"
               >
                 {loading ? "Decrypting..." : "Unlock Data Stream"}
               </button>

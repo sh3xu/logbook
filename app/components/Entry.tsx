@@ -148,7 +148,7 @@ export default function Entry() {
   }
 
   return (
-    <div className="p-6 space-y-4 bg-white h-full overflow-y-auto">
+    <div className="p-4 md:p-6 space-y-4 bg-white h-full overflow-y-auto">
       <h2 className="font-black text-2xl mb-6">Create New Entry</h2>
 
       {/* Daily Log Text */}
