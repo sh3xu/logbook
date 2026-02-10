@@ -27,11 +27,12 @@ type WindowSpec = {
 
 import { useAuth } from "@/hooks/use-auth"
 import Landing from "@/components/Landing"
+import { useInactivityTimer } from "@/hooks/use-inactivity-timer"
 
 export default function Page() {
   const { session, loading } = useAuth()
+  useInactivityTimer()
 
-  // Windows order doubles as z-order; last is topmost
   const [openApps, setOpenApps] = useState<Exclude<AppKey, "palette" | null>[]>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("logbook-open-apps")
@@ -48,7 +49,6 @@ export default function Page() {
 
   const [activeTopBarItem, setActiveTopBarItem] = useState<"key" | "notifications" | null>(null)
 
-  // Sync profile and admin status on session change
   useEffect(() => {
     async function fetchProfile() {
       if (!session?.user) return
@@ -76,7 +76,6 @@ export default function Page() {
     fetchProfile()
   }, [session, setProfile, entries.length])
 
-  // Initialize active app (Logbook by default)
   useEffect(() => {
     if (session) {
       if (openApps.length > 0) {
@@ -87,14 +86,12 @@ export default function Page() {
     }
   }, [setActiveApp, session, openApps.length])
 
-  // Persist open apps to localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("logbook-open-apps", JSON.stringify(openApps))
     }
   }, [openApps])
 
-  // Global key handling: Esc closes palette or topmost window
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -128,7 +125,6 @@ export default function Page() {
 
   function openApp(app: Exclude<AppKey, "palette" | null>) {
     setOpenApps((prev) => {
-      // Mobile check: Single app mode
       if (typeof window !== "undefined" && window.innerWidth < 768) {
         return [app]
       }
@@ -205,7 +201,6 @@ export default function Page() {
 
   return (
     <main className="fixed inset-0 overflow-hidden">
-      {/* Background: off-white, 8px grid + subtle grain */}
       <div
         className="absolute inset-0"
         style={{
@@ -217,7 +212,6 @@ export default function Page() {
           backgroundSize: "8px 8px, 8px 8px",
         }}
       />
-      {/* Grain overlay */}
       <div
         className="absolute inset-0 pointer-events-none mix-blend-multiply opacity-30"
         style={{
@@ -226,10 +220,8 @@ export default function Page() {
         }}
       />
 
-      {/* p5 Eyes wallpaper */}
       <Eyes activeApp={activeApp ?? null} />
 
-      {/* Top Bar (Notifications + Key + Manual + Logout) */}
       <div className="fixed top-3 right-3 md:top-6 md:right-6 z-40 flex items-center gap-2 md:gap-4">
         <button
           onClick={() => openApp("manual")}
@@ -263,7 +255,6 @@ export default function Page() {
         </button>
       </div>
 
-      {/* Windows */}
       <div className="absolute inset-0 z-10">
         {windows
           .filter((w) => openApps.includes(w.key))
@@ -284,7 +275,6 @@ export default function Page() {
           })}
       </div>
 
-      {/* Dock */}
       <div className="absolute left-0 right-0 bottom-6 z-20 flex justify-center">
         <Dock
           activeApp={activeApp ?? null}
@@ -296,7 +286,6 @@ export default function Page() {
         />
       </div>
 
-      {/* Command Palette */}
       <CommandPalette
         open={paletteOpen}
         onOpenChange={(o) => {
@@ -311,7 +300,6 @@ export default function Page() {
         onReset={resetAll}
       />
 
-      {/* Re-encryption Progress Backdrop */}
       {isReencrypting && (
         <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center p-8 backdrop-blur-sm">
           <div className="max-w-md w-full space-y-8 text-center animate-in zoom-in-95 duration-300">

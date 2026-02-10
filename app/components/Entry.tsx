@@ -53,6 +53,17 @@ export default function Entry() {
 
   const handleSubmit = async () => {
     if (formData.mood && formData.classification) {
+      if (!encryptionKey) {
+        setModal({
+          isOpen: true,
+          title: "Vault Locked",
+          message: "You must unlock your vault with the Master Key before saving an entry. This ensures your data remains encrypted and secure.",
+          type: "alert",
+          onConfirm: () => setModal((prev) => ({ ...prev, isOpen: false })),
+        })
+        return
+      }
+
       const entryData = {
         mood: formData.mood,
         workingHours: formData.workingHours || 0,
