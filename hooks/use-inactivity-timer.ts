@@ -13,6 +13,8 @@ export function useInactivityTimer() {
     useEffect(() => {
         if (!encryptionKey) return
 
+        lastActivityRef.current = Date.now()
+
         const handleVisibilityChange = () => {
             if (document.visibilityState === "visible") {
                 if (Date.now() - lastActivityRef.current > INACTIVITY_LIMIT) {
