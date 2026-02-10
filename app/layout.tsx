@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import SecurityGuard from "./components/SecurityGuard"
+import ServiceWorkerRegister from "./components/ServiceWorkerRegister"
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
@@ -12,6 +13,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: "#000000",
 }
 
 export const metadata: Metadata = {
@@ -32,6 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans antialiased overflow-x-hidden`}>
+        <ServiceWorkerRegister />
         <SecurityGuard />
         {children}
         <Analytics />
