@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useUIStore, type DailyEntry } from "@/lib/ui-store";
 import { X, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { encryptMessage } from "@/lib/encryption";
+import { encryptMessage, ENCRYPTION_VERSION_CURRENT } from "@/lib/encryption";
 import { getTodayDateString } from "@/lib/utils";
 import Modal from "./Modal";
 
@@ -121,6 +121,7 @@ export default function Entry() {
         user_id: user.id,
         content: content,
         is_encrypted: is_encrypted,
+        encryption_version: is_encrypted ? ENCRYPTION_VERSION_CURRENT : null,
         created_at: new Date().toISOString(),
       });
 

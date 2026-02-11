@@ -24,6 +24,7 @@ alter table public.profiles add column if not exists email text;
 alter table public.profiles add column if not exists avatar_url text;
 alter table public.profiles add column if not exists bio text;
 alter table public.profiles add column if not exists is_admin boolean default false;
+alter table public.profiles add column if not exists key_hash_salt text;
 
 -- ===============================
 -- 1.1 FEATURE REQUESTS TABLE
@@ -87,9 +88,12 @@ create table if not exists public.entries (
   user_id uuid not null references auth.users on delete cascade,
   content text not null,
   is_encrypted boolean default true not null,
+  encryption_version smallint default null,
   created_at timestamptz default timezone('utc', now()) not null,
   updated_at timestamptz default timezone('utc', now()) not null
 );
+
+alter table public.entries add column if not exists encryption_version smallint default null;
 
 -- ===============================
 -- ENABLE RLS
@@ -180,14 +184,16 @@ begin
     username,
     full_name,
     email,
-    key_hash
+    key_hash,
+    key_hash_salt
   )
   values (
     new.id,
     new.raw_user_meta_data->>'username',
     new.raw_user_meta_data->>'full_name',
     new.email,
-    new.raw_user_meta_data->>'key_hash'
+    new.raw_user_meta_data->>'key_hash',
+    new.raw_user_meta_data->>'key_hash_salt'
   )
   on conflict (id) do nothing;
 

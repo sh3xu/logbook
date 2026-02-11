@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
-import { hashKey } from "@/lib/encryption"
+import { generateKeyHash } from "@/lib/encryption"
 import { useUIStore } from "@/lib/ui-store"
 import { Loader2, Shield, Lock, Eye, EyeOff, CheckCircle2, XCircle, Copy, RefreshCw, Check } from "lucide-react"
 
@@ -94,7 +94,7 @@ export default function Landing() {
         return
       }
 
-      const keyHash = await hashKey(decryptionKey)
+      const { hash, saltBase64 } = await generateKeyHash(decryptionKey)
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -103,7 +103,8 @@ export default function Landing() {
           data: {
             username,
             full_name: fullName,
-            key_hash: keyHash,
+            key_hash: hash,
+            key_hash_salt: saltBase64,
           }
         }
       })

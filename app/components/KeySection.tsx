@@ -11,7 +11,14 @@ import {
   ShieldCheck,
   RefreshCw,
 } from "lucide-react";
-import { hashKey, encryptMessage, decryptMessage } from "@/lib/encryption";
+import {
+  verifyKey,
+  verifyLegacyKey,
+  generateKeyHash,
+  encryptMessage,
+  decryptMessage,
+  ENCRYPTION_VERSION_CURRENT,
+} from "@/lib/encryption";
 import { supabase } from "@/lib/supabase";
 
 export default function KeySection({
@@ -47,7 +54,6 @@ export default function KeySection({
   } = useUIStore();
 
   const handleUnlock = async () => {
-    // ... logic remains same ...
     setLoading(true);
     setError(null);
     try {
@@ -58,14 +64,31 @@ export default function KeySection({
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("key_hash")
+        .select("key_hash, key_hash_salt")
         .eq("id", user.id)
         .maybeSingle();
 
       if (!profile) throw new Error("Security profile not found");
 
-      const inputHash = await hashKey(inputKey);
-      if (inputHash === profile.key_hash) {
+      let valid = false;
+      if (profile.key_hash_salt) {
+        valid = await verifyKey(
+          inputKey,
+          profile.key_hash_salt,
+          profile.key_hash
+        );
+      } else {
+        valid = await verifyLegacyKey(inputKey, profile.key_hash);
+      }
+
+      if (valid) {
+        if (!profile.key_hash_salt) {
+          const { hash, saltBase64 } = await generateKeyHash(inputKey);
+          await supabase
+            .from("profiles")
+            .update({ key_hash: hash, key_hash_salt: saltBase64 })
+            .eq("id", user.id);
+        }
         setEncryptionKey(inputKey);
         if (isControlled && onToggle) {
           onToggle();
@@ -123,7 +146,11 @@ export default function KeySection({
 
         try {
           decrypted = entry.is_encrypted
-            ? await decryptMessage(entry.content, encryptionKey!)
+            ? await decryptMessage(
+                entry.content,
+                encryptionKey!,
+                entry.encryption_version,
+              )
             : entry.content;
         } catch (e) {
           console.error(`Failed to decrypt entry ${entry.id}`, e);
@@ -134,18 +161,23 @@ export default function KeySection({
 
         const { error: updateErr } = await supabase
           .from("entries")
-          .update({ content: reEncrypted, is_encrypted: true })
+          .update({
+            content: reEncrypted,
+            is_encrypted: true,
+            encryption_version: ENCRYPTION_VERSION_CURRENT,
+          })
           .eq("id", entry.id);
 
         if (updateErr) throw updateErr;
         setReencryptionProgress(((i + 1) / total) * 90); // Save last 10% for profile update
       }
 
-      // 3. Update profile hash
-      const newHash = await hashKey(newKey);
+      // 3. Update profile hash and salt
+      const { hash: newHash, saltBase64: newSalt } =
+        await generateKeyHash(newKey);
       const { error: profileErr } = await supabase
         .from("profiles")
-        .update({ key_hash: newHash })
+        .update({ key_hash: newHash, key_hash_salt: newSalt })
         .eq("id", user.id);
 
       if (profileErr) throw profileErr;

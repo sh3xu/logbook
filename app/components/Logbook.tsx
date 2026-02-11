@@ -77,6 +77,7 @@ export default function Logbook() {
                   const decryptedStr = await decryptMessage(
                     dbEntry.content,
                     encryptionKey,
+                    dbEntry.encryption_version,
                   );
                   entryData = JSON.parse(decryptedStr);
                   status = "decrypted";
