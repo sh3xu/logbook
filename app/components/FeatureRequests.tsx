@@ -16,11 +16,7 @@ import {
   Filter as FilterIcon,
   AlertTriangle,
 } from "lucide-react";
-import {
-  RegExpMatcher,
-  englishDataset,
-  englishRecommendedTransformers,
-} from "obscenity";
+import { WordFilter } from "censorkit";
 import Modal from "./Modal";
 
 type Request = {
@@ -43,11 +39,10 @@ export default function FeatureRequests() {
   );
   const [lastRequestDate, setLastRequestDate] = useState<string | null>(null);
   const [profanityWarning, setProfanityWarning] = useState(false);
-  const [matcher] = useState(
+  const [filter] = useState(
     () =>
-      new RegExpMatcher({
-        ...englishDataset.build(),
-        ...englishRecommendedTransformers,
+      new WordFilter({
+        dictionaries: ["english"],
       }),
   );
   const [modal, setModal] = useState<{
@@ -123,17 +118,10 @@ export default function FeatureRequests() {
     } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Clean profanity before submitting
-    const cleanTitle = matcher.hasMatch(newTitle)
-      ? newTitle.replace(/\b\w+\b/g, (word) =>
-          matcher.hasMatch(word) ? "****" : word,
-        )
-      : newTitle;
-    const cleanDesc = matcher.hasMatch(newDesc)
-      ? newDesc.replace(/\b\w+\b/g, (word) =>
-          matcher.hasMatch(word) ? "****" : word,
-        )
-      : newDesc;
+    const titleResult = filter.clean(newTitle);
+    const descResult = filter.clean(newDesc);
+    const cleanTitle = titleResult.cleaned;
+    const cleanDesc = descResult.cleaned;
 
     const { error } = await supabase.from("feature_requests").insert({
       title: cleanTitle,
@@ -152,12 +140,15 @@ export default function FeatureRequests() {
 
   const handleTitleChange = (value: string) => {
     setNewTitle(value);
-    setProfanityWarning(matcher.hasMatch(value));
+    setProfanityWarning(filter.clean(value).matches.length > 0);
   };
 
   const handleDescChange = (value: string) => {
     setNewDesc(value);
-    setProfanityWarning(matcher.hasMatch(value) || matcher.hasMatch(newTitle));
+    setProfanityWarning(
+      filter.clean(value).matches.length > 0 ||
+        filter.clean(newTitle).matches.length > 0,
+    );
   };
 
   const deleteRequest = async (id: string) => {
